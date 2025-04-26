@@ -4,11 +4,6 @@ from shiny import App, reactive, render, ui
 from shinywidgets import output_widget, render_widget
 import plotly.graph_objects as go
 
-MESES = {
-    1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
-    5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
-    9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
-}
 
 app_ui = ui.page_sidebar(
     ui.sidebar(
@@ -28,6 +23,7 @@ app_ui = ui.page_sidebar(
     ),
 )
 
+
 def server(input, output, session):
     @reactive.calc
     def epw_data():
@@ -40,14 +36,8 @@ def server(input, output, session):
         df_res = df_res.reset_index().rename(columns={df_res.index.name: "Fecha"})
         df_res["GHCal"] = df_res["GHCal"].round(1)
         df_res["GHEnf"] = df_res["GHEnf"].round(1)
-
         if freq == "ME":
-            df_res["Mes"] = df_res["Fecha"].dt.month.map(MESES)
-            df_res["Mes"] = pd.Categorical(
-                df_res["Mes"],
-                categories=list(MESES.values()),
-                ordered=True
-            )
+            df_res["Mes"] = df_res["Fecha"].dt.month_name(locale="es_ES").str.capitalize()
             return df_res[["Mes", "GHCal", "GHEnf"]]
         else:
             df_res["Año"] = df_res["Fecha"].dt.year
