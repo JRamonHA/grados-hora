@@ -16,8 +16,8 @@ app_ui = ui.page_sidebar(
             "file", "Cargar archivo EPW", accept=[".epw"],
             button_label="Examinar", placeholder="Ningún archivo seleccionado"
         ),
-        ui.input_numeric("t_cal", "Calentamiento", value=0),
-        ui.input_numeric("t_enf", "Enfriamiento", value=0),
+        ui.input_numeric("t_cal", "Setpoint calentamiento", value=0),
+        ui.input_numeric("t_enf", "Setpoint enfriamiento", value=0),
         ui.input_selectize("resample", "Frecuencia", {"A": "Mensual", "B": "Anual"}),
         open="always", position="right", bg="#f8f8f8",
     ),
@@ -38,8 +38,8 @@ def server(input, output, session):
 
     def format_result(df_res, freq):
         df_res = df_res.reset_index().rename(columns={df_res.index.name: "Fecha"})
-        df_res["GHCal"] = df_res["GHCal"].round(1)
-        df_res["GHEnf"] = df_res["GHEnf"].round(1)
+        df_res["GHCal"] = df_res["GHCal"].round(0)
+        df_res["GHEnf"] = df_res["GHEnf"].round(0)
 
         if freq == "ME":
             df_res["Mes"] = df_res["Fecha"].dt.month.map(MESES)
@@ -71,7 +71,13 @@ def server(input, output, session):
 
     @render.data_frame
     def discomfort_df():
-        return discomfort_data()
+        df = discomfort_data()
+        if df.empty:
+            return df
+        return df.rename(columns={
+            "GHCal": "GHCal (°Ch)",
+            "GHEnf": "GHEnf (°Ch)"
+        })
 
     @render_widget
     def temp_plot():
@@ -99,7 +105,7 @@ def server(input, output, session):
                 x=df["Fecha"],
                 y=[set_cal] * len(df["Fecha"]),
                 mode="lines",
-                name="Calentamiento",
+                name="Setpoint calentamiento",
                 line=dict(color="#EF553B")
             )
         )
@@ -110,7 +116,7 @@ def server(input, output, session):
                 x=df["Fecha"],
                 y=[set_enf] * len(df["Fecha"]),
                 mode="lines",
-                name="Enfriamiento",
+                name="Setpoint enfriamiento",
                 line=dict(color="#00CC96")
             )
         )
